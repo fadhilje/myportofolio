@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-+bgb*!wlveb+xd#z2x=j4o8_=$bv&brq9bwhwnh=b!*4hoxn(w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "nurfadhil-kurniawan-myportofolio.pws.ui.ac.id"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "nurfadhil-kurniawan-myportofolio.pws.cs.ui.ac.id"]
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 
 
@@ -137,7 +137,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [BASE_DIR / 'static/']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 WHITENOISE_USE_FINDERS = True
 
