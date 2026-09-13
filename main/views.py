@@ -10,6 +10,7 @@ from main.models import Experience, Skills
 def show_main(request):
     context = {
         "name": "Nurfadhil Kurniawan",
+        "username": "Nurfadhil",
         "npm": "2506540765",
         "study_program": "S1 Sistem Informasi",
         "bio": (
