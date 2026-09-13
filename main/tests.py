@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from main.models import Experience
+from main.models import Experience, Skills
 
 
 class MainTest(TestCase):
@@ -56,3 +56,25 @@ class MainTest(TestCase):
         self.assertFalse(self.experience.is_ongoing)
         self.assertContains(response, "Selesai")
         self.assertNotContains(response, "Sedang berlangsung")
+
+class SkillTest(TestCase):
+    def setUp(self):
+        self.skill = Skills.objects.create(
+            name="Python",
+            category="language",
+        )
+
+    def test_show_skills_page_uses_correct_template(self):
+        response = self.client.get(reverse("main:show_skills"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "skills.html")
+
+    def test_skill_appears_when_data_exists(self):
+        response = self.client.get(reverse("main:show_skills"))
+        self.assertContains(response, "Python")
+        self.assertContains(response, self.skill.get_category_display())
+
+    def test_empty_skills_page(self):
+        Skills.objects.all().delete()
+        response = self.client.get(reverse("main:show_skills"))
+        self.assertContains(response, "Belum ada data skill.")

@@ -3,7 +3,8 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render
 
-from main.models import Experience
+from collections import OrderedDict
+from main.models import Experience, Skills
 
 
 def show_main(request):
@@ -26,3 +27,13 @@ def show_experience(request):
         "experience_list": Experience.objects.all(),
     }
     return render(request, "experience.html", context)
+
+def show_skills(request):
+    skills = Skills.objects.all()
+    grouped = OrderedDict()
+    for value, label in Skills.SKILL_CHOICE:
+        items = skills.filter(category=value)
+        if items.exists():
+            grouped[label] = items
+    context = {'grouped_skills': grouped}
+    return render(request, 'skills.html', context)
