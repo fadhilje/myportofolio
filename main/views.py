@@ -35,5 +35,7 @@ def show_skills(request):
         items = skills.filter(category=value)
         if items.exists():
             grouped[label] = items
-    context = {'grouped_skills': grouped}
+    context = {
+        "name" : "Nurfadhil",
+        "grouped_skills": grouped}
     return render(request, 'skills.html', context)

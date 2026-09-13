@@ -31,7 +31,6 @@ h1 {
 
 .brand {
     font-family: var(--font-mono);
-    font-weight: 500;
 }
 
 .container {
@@ -204,10 +203,8 @@ h1 {
     }
 }
 
-.education-section,
-.experience-section,
-.skill-section{
-    padding: 3rem 0;
+.education-section{
+    padding: 4rem 0;
     border-top: 1px solid var(--line);
 }
 
@@ -373,16 +370,9 @@ h1 {
     height: 24px;
     fill: currentColor;
 }
-.icon-tile i {
-    font-size: 1.4rem;
-    color: var(--text-muted);
-}
-.icon-tile:hover i {
-    color: var(--accent-dark);
-}
 
-
-.icon-tile:focus-visible {
+.icon-tile:focus-visible,
+.icon-tile:hover {
     border-color: var(--accent);
     color: var(--accent-dark);
     transform: translateY(-2px);
@@ -400,20 +390,14 @@ h1 {
     border: 0;
 }
 
-.experience-section {
+.experience-section,
+.skill-section{
     padding: 4rem 0;
     border-top: 1px solid var(--line);
 }
 
-.section-kicker {
-    color: var(--accent-dark);
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.experience-section h1 {
+.experience-section h1,
+.skill-section h1{
     margin: 0.4rem 0 1.5rem;
     font-size: 2rem;
 }
