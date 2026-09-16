@@ -152,4 +152,4 @@ MAILERS = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = ["https://pws.cs.ui.ac.id/nurfadhil.kurniawan/myportofolio"]
+CSRF_TRUSTED_ORIGINS = ["https://nurfadhil-kurniawan-myportofolio.pws.cs.ui.ac.id"]
