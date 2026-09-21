@@ -7,6 +7,7 @@ from main.forms import ProjectForm, ExperienceForm
 from django.contrib import messages
 from django.core import serializers
 from django.http import HttpResponse
+from django.conf import settings
 
 
 def show_main(request):
@@ -23,6 +24,9 @@ def show_main(request):
     }
     return render(request, "index.html", context)
 
+def _secret_key_valid(request):
+    return request.POST.get("secret_key", "") == settings.OWNER_SECRET_KEY
+
 
 def get_experience_json(request):
     experiences = Experience.objects.all()
@@ -30,20 +34,31 @@ def get_experience_json(request):
     return HttpResponse(experience_json, content_type="application/json")
 
 def show_experience(request):
+    json_response = get_experience_json(request)
+
+    experiences = serializers.deserialize(
+        "json",
+        json_response.content.decode("utf-8"),
+    )
+    experiences = [experience.object for experience in experiences]
+
     context = {
         "name": "Nurfadhil",
-        "experience_list": Experience.objects.all(),
+        "experience_list": experiences,
     }
     return render(request, "experience.html", context)
 
 def create_experience(request):
     form = ExperienceForm(request.POST or None)
- 
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Experience baru berhasil ditambahkan!")
-        return redirect("main:show_experience")
- 
+
+    if request.method == "POST":
+        if not _secret_key_valid(request):
+            messages.error(request, "Secret Key Salah. Experience tidak dapat ditambahkan.")
+        elif form.is_valid():
+            form.save()
+            messages.success(request, "Experience baru berhasil ditambahkan!")
+            return redirect("main:show_experience")
+
     context = {
         "name": "Nurfadhil",
         "form": form,
@@ -52,27 +67,39 @@ def create_experience(request):
  
  
 def update_experience(request, experience_id):
-    experience = get_object_or_404(Experience, pk=experience_id)
+    experience = Experience.objects.filter(pk=experience_id).first()
+    if experience is None:
+        messages.error(request, "Experience tidak ditemukan, mungkin sudah dihapus.")
+        return redirect("main:show_experience")
     form = ExperienceForm(request.POST or None, instance=experience)
  
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Experience berhasil diperbarui!")
-        return redirect("main:show_experience")
- 
+    if request.method == "POST":
+        if not _secret_key_valid(request):
+            messages.error(request, "Secret key salah. Experience tidak diperbarui.")
+        elif form.is_valid():
+            form.save()
+            messages.success(request, "Experience berhasil diperbarui!")
+            return redirect("main:show_experience")
+
     context = {
         "name": "Nurfadhil",
         "form": form,
     }
-    return render(request, "experience_form.html", context)
+    return render(request, "experience_form.html", {"name": "Nurfadhil", "form": form, "is_edit": True})
  
  
 def delete_experience(request, experience_id):
-    experience = get_object_or_404(Experience, pk=experience_id)
+    experience = Experience.objects.filter(pk=experience_id).first()
+    if experience is None:
+        messages.error(request, "Experience tidak ditemukan, mungkin sudah dihapus.")
+        return redirect("main:show_experience")
  
     if request.method == "POST":
-        experience.delete()
-        messages.success(request, "Experience berhasil dihapus!")
+        if not _secret_key_valid(request):
+            messages.error(request, "Secret key salah. Experience tidak dihapus.")
+        else:
+            experience.delete()
+            messages.success(request, "Experience berhasil dihapus!")
         return redirect("main:show_experience")
  
     return redirect("main:show_experience")
@@ -109,10 +136,13 @@ def show_projects(request):
 def create_project(request):
     form = ProjectForm(request.POST or None)
 
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Proyek baru berhasil ditambahkan!")
-        return redirect("main:show_projects")
+    if request.method == "POST":
+        if not _secret_key_valid(request):
+            messages.error(request, "Secret key salah. Proyek tidak ditambahkan.")
+        elif form.is_valid():
+            form.save()
+            messages.success(request, "Proyek baru berhasil ditambahkan!")
+            return redirect("main:show_projects")
 
     context = {
         "name": "Burhan",
@@ -124,14 +154,18 @@ def update_project(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
     form = ProjectForm(request.POST or None, instance=project)
  
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Proyek berhasil diperbarui!")
-        return redirect("main:show_projects")
+    if request.method == "POST":
+        if not _secret_key_valid(request):
+            messages.error(request, "Secret key salah. Proyek tidak diperbarui.")
+        elif form.is_valid():
+            form.save()
+            messages.success(request, "Proyek berhasil diperbarui!")
+            return redirect("main:show_projects")
  
     context = {
-        "name": "Burhan",
-        "form": form,
+    "name": "Burhan",
+    "form": form,
+    "is_edit": True,
     }
     return render(request, "projects_form.html", context)
 
@@ -149,8 +183,11 @@ def delete_project(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
 
     if request.method == "POST":
-        project.delete()
-        messages.success(request, "Project berhasil dihapus!")
+        if not _secret_key_valid(request):
+            messages.error(request, "Secret key salah. Proyek tidak dihapus.")
+        else:
+            project.delete()
+            messages.success(request, "Project berhasil dihapus!")
         return redirect("main:show_projects")
 
     return redirect("main:show_projects")

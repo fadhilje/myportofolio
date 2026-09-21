@@ -36,6 +36,8 @@
                     popovertargetaction="hide">Batal</button>
             <form method="post" action="{% url 'main:delete_project' project.id %}">
                 {% csrf_token %}
+                <input type="password" name="secret_key" placeholder="Secret key" required
+                       style="margin-bottom: 0.5rem; width: 100%;">
                 <button type="submit" class="button button-danger">Ya, Hapus</button>
             </form>
         </div>

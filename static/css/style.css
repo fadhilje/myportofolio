@@ -939,4 +939,8 @@ h1 {
         width: 100%;
         text-align: center;
     }
+    
+    .form-success {
+    color: #16a34a;
+}
 }

@@ -21,6 +21,10 @@
                             {% endfor %}
                         </div>
                     {% endfor %}
+                    <div class="form-group">
+                        <label for="secret_key">Secret Key</label>
+                        <input type="password" id="secret_key" name="secret_key" placeholder="Masukkan secret key" required>
+                    </div>
                     <button type="submit" class="button">{% if form.instance.pk %}Simpan Perubahan{% else %}Tambah Experience{% endif %}</button>
                     <a href="{% url 'main:show_experience' %}" class="button button-secondary">Batal</a>
                 </form>

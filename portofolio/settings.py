@@ -32,6 +32,9 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "nurfadhil-kurniawan-myportofolio.pws.cs.ui.ac.id"]
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 
+# Secret Key Create,Update, & Delete Form
+OWNER_SECRET_KEY = os.getenv('OWNER_SECRET_KEY', 'Jangan-di-obrak-abrik') 
+
 
 # Application definition
 

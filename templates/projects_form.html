@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block meta %}
-        <title>{{username}} - Add Project</title>
+        <title>{{username}} - {% if form.instance.pk %}Edit Project{% else %}Add Project{% endif %}</title>
 {% endblock meta %}
 {% block content %}
     <main>
         <section class="experience-section">
             <div class="container">
-                <p class="section-kicker">Tambah Projek Barumu!</p>
-                <h1>Add New Projects</h1>
+                <p class="section-kicker">{% if form.instance.pk %}Perbarui Projekmu!{% else %}Tambah Projek Barumu!{% endif %}</p>
+                <h1>{% if form.instance.pk %}Edit Project{% else %}Add New Projects{% endif %}</h1>
                 <form method="post"
-                      action="{% url 'main:create_project' %}"
+                      action="{% if form.instance.pk %}{% url 'main:update_project' form.instance.pk %}{% else %}{% url 'main:create_project' %}{% endif %}"
                       class="project-form">
                     {% csrf_token %}
                     {% for field in form %}
@@ -21,7 +21,11 @@
                             {% endfor %}
                         </div>
                     {% endfor %}
-                    <button type="submit" class="button">Tambah Project</button>
+                    <div class="form-group">
+                        <label for="secret_key">Secret Key</label>
+                        <input type="password" id="secret_key" name="secret_key" placeholder="Masukkan secret key" required>
+                    </div>
+                    <button type="submit" class="button">{% if form.instance.pk %}Simpan Perubahan{% else %}Tambah Project{% endif %}</button>
                     <a href="{% url 'main:show_projects' %}" class="button button-secondary">Batal</a>
                 </form>
             </div>
