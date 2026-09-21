@@ -1,5 +1,5 @@
 # Create your views here.
-from django.shortcuts import render, get_object_or_404,redirect
+from django.shortcuts import render, get_object_or_404, redirect
 
 from collections import OrderedDict
 from main.models import Experience, Skills, Project
@@ -53,7 +53,7 @@ def create_experience(request):
 
     if request.method == "POST":
         if not _secret_key_valid(request):
-            messages.error(request, "Secret Key Salah. Experience tidak dapat ditambahkan.")
+            messages.error(request, "Secret key salah. Experience tidak dapat ditambahkan.")
         elif form.is_valid():
             form.save()
             messages.success(request, "Experience baru berhasil ditambahkan!")
@@ -62,17 +62,21 @@ def create_experience(request):
     context = {
         "name": "Nurfadhil",
         "form": form,
+        "is_edit": False,
     }
     return render(request, "experience_form.html", context)
- 
- 
+
+
 def update_experience(request, experience_id):
     experience = Experience.objects.filter(pk=experience_id).first()
     if experience is None:
-        messages.error(request, "Experience tidak ditemukan, mungkin sudah dihapus.")
+        if request.method == "POST" and not _secret_key_valid(request):
+            messages.error(request, "Secret key salah. Experience tidak diperbarui.")
+        else:
+            messages.error(request, "Experience tidak ditemukan, mungkin sudah dihapus.")
         return redirect("main:show_experience")
     form = ExperienceForm(request.POST or None, instance=experience)
- 
+
     if request.method == "POST":
         if not _secret_key_valid(request):
             messages.error(request, "Secret key salah. Experience tidak diperbarui.")
@@ -84,24 +88,23 @@ def update_experience(request, experience_id):
     context = {
         "name": "Nurfadhil",
         "form": form,
+        "is_edit": True,
     }
-    return render(request, "experience_form.html", {"name": "Nurfadhil", "form": form, "is_edit": True})
- 
- 
+    return render(request, "experience_form.html", context)
+
+
 def delete_experience(request, experience_id):
-    experience = Experience.objects.filter(pk=experience_id).first()
-    if experience is None:
-        messages.error(request, "Experience tidak ditemukan, mungkin sudah dihapus.")
-        return redirect("main:show_experience")
- 
     if request.method == "POST":
         if not _secret_key_valid(request):
             messages.error(request, "Secret key salah. Experience tidak dihapus.")
         else:
-            experience.delete()
-            messages.success(request, "Experience berhasil dihapus!")
-        return redirect("main:show_experience")
- 
+            experience = Experience.objects.filter(pk=experience_id).first()
+            if experience is None:
+                messages.error(request, "Experience tidak ditemukan, mungkin sudah dihapus.")
+            else:
+                experience.delete()
+                messages.success(request, "Experience berhasil dihapus!")
+
     return redirect("main:show_experience")
 
 def show_skills(request):
@@ -112,9 +115,22 @@ def show_skills(request):
         if items.exists():
             grouped[label] = items
     context = {
-        "name" : "Nurfadhil",
-        "grouped_skills": grouped}
-    return render(request, 'skills.html', context)
+        "name": "Nurfadhil",
+        "grouped_skills": grouped,
+    }
+    return render(request, "skills.html", context)
+
+
+def get_projects_json(request):
+    title_query = request.GET.get("title", "").strip()
+    projects = Project.objects.all()
+
+    if title_query:
+        projects = projects.filter(title__icontains=title_query)
+
+    projects_json = serializers.serialize("json", projects)
+    return HttpResponse(projects_json, content_type="application/json")
+
 
 def show_projects(request):
     json_response = get_projects_json(request)
@@ -127,11 +143,12 @@ def show_projects(request):
     title_query = request.GET.get("title", "").strip()
 
     context = {
-        "name": "Burhan",
+        "name": "Nurfadhil",
         "project_list": projects,
         "title_query": title_query,
     }
     return render(request, "project.html", context)
+
 
 def create_project(request):
     form = ProjectForm(request.POST or None)
@@ -145,15 +162,25 @@ def create_project(request):
             return redirect("main:show_projects")
 
     context = {
-        "name": "Burhan",
+        "name": "Nurfadhil",
         "form": form,
+        "is_edit": False,
     }
     return render(request, "projects_form.html", context)
 
+
 def update_project(request, project_id):
-    project = get_object_or_404(Project, pk=project_id)
+    project = Project.objects.filter(pk=project_id).first()
+
+    if project is None:
+        if request.method == "POST" and not _secret_key_valid(request):
+            messages.error(request, "Secret key salah. Proyek tidak diperbarui.")
+        else:
+            messages.error(request, "Proyek tidak ditemukan, mungkin sudah dihapus.")
+        return redirect("main:show_projects")
+
     form = ProjectForm(request.POST or None, instance=project)
- 
+
     if request.method == "POST":
         if not _secret_key_valid(request):
             messages.error(request, "Secret key salah. Proyek tidak diperbarui.")
@@ -161,33 +188,24 @@ def update_project(request, project_id):
             form.save()
             messages.success(request, "Proyek berhasil diperbarui!")
             return redirect("main:show_projects")
- 
+
     context = {
-    "name": "Burhan",
-    "form": form,
-    "is_edit": True,
+        "name": "Nurfadhil",
+        "form": form,
+        "is_edit": True,
     }
     return render(request, "projects_form.html", context)
 
-def get_projects_json(request):
-    title_query = request.GET.get("title", "").strip()
-    projects = Project.objects.all()
-
-    if title_query:
-        projects = projects.filter(title__icontains=title_query)
-
-    projects_json = serializers.serialize("json", projects)
-    return HttpResponse(projects_json, content_type="application/json")
-
 def delete_project(request, project_id):
-    project = get_object_or_404(Project, pk=project_id)
-
     if request.method == "POST":
         if not _secret_key_valid(request):
             messages.error(request, "Secret key salah. Proyek tidak dihapus.")
         else:
-            project.delete()
-            messages.success(request, "Project berhasil dihapus!")
-        return redirect("main:show_projects")
+            project = Project.objects.filter(pk=project_id).first()
+            if project is None:
+                messages.error(request, "Proyek tidak ditemukan, mungkin sudah dihapus.")
+            else:
+                project.delete()
+                messages.success(request, "Proyek berhasil dihapus!")
 
     return redirect("main:show_projects")
