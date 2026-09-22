@@ -1,13 +1,17 @@
 # Create your views here.
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect
 
 from collections import OrderedDict
 from main.models import Experience, Skills, Project
 from main.forms import ProjectForm, ExperienceForm
-from django.contrib import messages
 from django.core import serializers
 from django.http import HttpResponse
 from django.conf import settings
+
+#Tutorial 4
+from django.contrib import messages
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 
 def show_main(request):
@@ -209,3 +213,30 @@ def delete_project(request, project_id):
                 messages.success(request, "Proyek berhasil dihapus!")
 
     return redirect("main:show_projects")
+
+def register(request):
+    form = UserCreationForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Akun berhasil dibuat. Silakan login.")
+        return redirect("main:login")
+
+    context = {
+        "name": "Burhan",
+        "form": form,
+    }
+    return render(request, "register.html", context)
+
+def login_user(request):
+    form = AuthenticationForm(request, data=request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        login(request, form.get_user())
+        return redirect("main:show_main")
+
+    context = {
+        "name": "Burhan",
+        "form": form,
+    }
+    return render(request, "login.html", context)
