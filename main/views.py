@@ -4,17 +4,19 @@ from django.shortcuts import render, redirect
 from collections import OrderedDict
 from main.models import Experience, Skills, Project
 from main.forms import ProjectForm, ExperienceForm
-from django.core import serializers
-from django.http import HttpResponse
-from django.conf import settings
 
-#Tutorial 4
+# Tutorial 4
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.core import serializers
+from django.http import HttpResponse
+from django.conf import settings
+import datetime
 
 
 def show_main(request):
+    last_login = request.COOKIES.get('last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
     context = {
         "name": "Nurfadhil Kurniawan",
         "username": "Nurfadhil",
@@ -25,6 +27,7 @@ def show_main(request):
             "Currently part of the CTF COMPFEST 18 team. Outside of that, I also enjoy playing various sports,"
             "but not quite at an athlete's level, but I like trying my hand at many of them."
         ),
+        "last_login" : last_login,
     }
     return render(request, "index.html", context)
 
@@ -219,12 +222,12 @@ def register(request):
 
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, "Akun berhasil dibuat. Silakan login.")
+        messages.success(request, "Akun berhasil dibuat. Silahkan login.")
         return redirect("main:login")
 
     context = {
-        "name": "Burhan",
-        "form": form,
+        "name" : "Nurfadhil Kurniawan",
+        "form" : form,
     }
     return render(request, "register.html", context)
 
@@ -233,10 +236,18 @@ def login_user(request):
 
     if request.method == "POST" and form.is_valid():
         login(request, form.get_user())
-        return redirect("main:show_main")
+        response = redirect("main:show_main")
+        response.set_cookie('last_login', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        return response
 
-    context = {
-        "name": "Burhan",
-        "form": form,
+    context ={
+        "name" : "Nurfadhil Kurniawan",
+        "form" : form,
     }
     return render(request, "login.html", context)
+
+def logout_user(request):
+    logout(request)
+    response = redirect("main:show_main")
+    response.delete_cookie('last_login')
+    return response
