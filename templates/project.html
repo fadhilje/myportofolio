@@ -9,7 +9,7 @@
                 <p class="section-kicker">Karya yang saya bangun</p>
                 <div class="project-header">
                     <h1>Projects</h1>
-                    {% if user.is_superuser %}
+                    {% if perms.main.add_project %}
                         <a href="{% url 'main:create_project' %}"
                         class="button project-add-button">
                             <span aria-hidden="true">+</span>
@@ -27,6 +27,15 @@
                            class="project-search__input"
                            aria-label="Cari berdasarkan nama proyek">
                     <button type="submit" class="button">Cari</button>
+
+                    {% if user.is_authenticated %}
+                        <label class="project-search__filter">
+                            <input type="checkbox" name="starred" value="1"
+                                {% if only_starred %}checked{% endif %}
+                                onchange="this.form.submit()">
+                            ★ Favorit saya
+                        </label>
+                    {% endif %}
                 </form>
                 <div class="experience-grid project-grid">
                     {% for project in project_list %}
@@ -44,16 +53,21 @@
                                     {% if project.project_url %}
                                         <a href="{{ project.project_url }}" class="button">Lihat Project</a>
                                     {% endif %}
+                                    {% if perms.main.change_project %}
+                                        <a href="{% url 'main:update_project' project.id %}" class="button">Edit</a>
+                                    {% endif %}
                                     {% include "components/project_star.html" with project=project %}
                                     
-                                    {% if user.is_superuser %}
+                                    {% if perms.main.delete_project %}
                                     {% include "components/project_delete_model.html" with project=project %}
                                     {% endif %}
                                 </div>
                             </div>
                         </article>
                     {% empty %}
-                        {% if title_query %}
+                        {% if only_starred %}
+                            <p class="empty-state">Belum ada proyek yang kamu star.</p>
+                        {% elif title_query %}
                             <p class="empty-state">Tidak ada proyek dengan nama tersebut.</p>
                         {% else %}
                             <p class="empty-state">Belum ada proyek yang ditambahkan.</p>

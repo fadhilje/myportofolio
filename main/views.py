@@ -12,9 +12,13 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core import serializers
 from django.http import HttpResponse
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 import datetime
+
+# Tugas 4
+from django.contrib.auth.decorators import login_required, permission_required
+from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def show_main(request):
@@ -58,6 +62,7 @@ def show_experience(request):
     return render(request, "experience.html", context)
 
 @login_required(login_url="/login/")
+@permission_required("main.add_experience", raise_exception=True)
 def create_experience(request):
     if not request.user.is_superuser:
         raise PermissionDenied
@@ -79,9 +84,8 @@ def create_experience(request):
     return render(request, "experience_form.html", context)
 
 @login_required(login_url="/login/")
+@permission_required("main.change_experience", raise_exception=True)
 def update_experience(request, experience_id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
     experience = Experience.objects.filter(pk=experience_id).first()
     if experience is None:
         if request.method == "POST" and not _secret_key_valid(request):
@@ -107,6 +111,7 @@ def update_experience(request, experience_id):
     return render(request, "experience_form.html", context)
 
 @login_required(login_url="/login/")
+@permission_required("main.delete_experience", raise_exception=True)
 def delete_experience(request, experience_id):
     if not request.user.is_superuser:
         raise PermissionDenied
@@ -140,12 +145,16 @@ def show_skills(request):
 
 def get_projects_json(request):
     title_query = request.GET.get("title", "").strip()
+    only_starred = request.GET.get("starred") == "1"
     projects = Project.objects.all()
 
     if title_query:
         projects = projects.filter(title__icontains=title_query)
 
-    projects_json = serializers.serialize("json", projects, use_natural_foreign_keys=True)
+    if only_starred and request.user.is_authenticated:
+        projects = projects.filter(starred_by=request.user)
+
+    projects_json = serializers.serialize("json", projects, fields=("title", "description", "tech_stark", "project_url", "project_image_url"))
     return HttpResponse(projects_json, content_type="application/json")
 
 
@@ -163,13 +172,13 @@ def show_projects(request):
         "name": "Nurfadhil",
         "project_list": projects,
         "title_query": title_query,
+        "only_starred": request.GET.get("starred") == "1" and request.user.is_authenticated,
     }
     return render(request, "project.html", context)
 
 @login_required(login_url="/login/")
+@permission_required("main.add_project", raise_exception=True)
 def create_project(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
     form = ProjectForm(request.POST or None)
 
     if request.method == "POST":
@@ -187,10 +196,10 @@ def create_project(request):
     }
     return render(request, "projects_form.html", context)
 
+# Key tetap di butuhkan oleh editor agar pemilik web tahu ketika editor ingin merubah page projek baik itu create/update/delete
 @login_required(login_url="/login/")
+@permission_required("main.change_project", raise_exception=True)
 def update_project(request, project_id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
     project = Project.objects.filter(pk=project_id).first()
 
     if project is None:
@@ -270,13 +279,15 @@ def logout_user(request):
     return response
 
 @login_required(login_url="/login/")
+@require_POST
 def toggle_star(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
+    if project.starred_by.filter(pk=request.user.pk).exists():
+        project.starred_by.remove(request.user)
+    else:
+        project.starred_by.add(request.user)
 
-    if request.method == "POST":
-        if request.user in project.starred_by.all():
-            project.starred_by.remove(request.user)
-        else:
-            project.starred_by.add(request.user)
-
+    next_url = request.META.get("HTTP_REFERER")
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
     return redirect("main:show_projects")

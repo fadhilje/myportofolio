@@ -88,3 +88,14 @@ Proses serialization diperlukan karena `QuerySet` dan object model itu cuma obje
 Pada Tugas 3, saya meminta bantuan AI Claude untuk men-debug error yang muncul saat proses **create, update, dan delete** (Experience dan Project). Gejalanya: saat menambah data, form malah mengirim request ke URL update dengan UUID acak sehingga muncul halaman 404 (`No Experience matches the given query` / `No Project matches the given query`), serta notifikasi berhasil/gagal (termasuk pesan secret key salah) tidak tampil sesuai yang saya harapkan. Dari hasil debugging tersebut, penyebabnya adalah pengecekan `{% if form.instance.pk %}` di template form yang selalu bernilai true, karena primary key model memakai `UUIDField(default=uuid.uuid4)` sehingga instance baru pun sudah punya `pk`. Perbaikannya memakai flag `is_edit` dari view, serta menampilkan `messages` di `base.html`.
 
 Prompt yang saya gunakan, "Saya mengalami kendala berupa error seperti pada gambar (Page not found 404, `No Experience matches the given query` saat POST ke `/experience/<uuid>/update/`). Berikut seluruh file proyek saya. Kira-kira untuk error ini, di bagian mana saya membuat kesalahannya?"
+
+
+## Tugas 4
+
+### Username Pengunjung biasa dan Editor
+| Username | Password | Status |
+| --- | --- | --- |
+| avengers | assemble | pengunjung biasa |
+| kalel | zor_el1229 | editor |
+
+### Deskripsi Setup

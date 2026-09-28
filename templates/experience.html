@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block meta %}
-<title>{{name}} - Experience </title>
+<title>Experience - {{name}}</title>
 {% endblock meta %}
 {% block content %}
     <main>
@@ -9,11 +9,11 @@
                 <p class="section-kicker">Perjalanan saya sejauh ini</p>
                 <div class="project-header">
                     <h1>Experience</h1>
-                    {% if user.is_superuser %}
-                    <a href="{% url 'main:create_experience' %}" class="button project-add-button">
-                        <span aria-hidden="true">+</span>
+                    {% if perms.main.add_experience %}
+                        <a href="{% url 'main:create_experience' %}" class="button project-add-button">
+                            <span aria-hidden="true">+</span>
                             Tambah Experience
-                    </a>
+                        </a>
                     {% endif %}
                 </div>
 
@@ -35,9 +35,11 @@
                             {% endif %}
 
                             <div class="project-actions">
-                                {% if user.is_superuser %}
-                                <a href="{% url 'main:update_experience' experience.id %}" class="button">Edit</a>
-                                {% include "components/experience_delete_model.html" with experience=experience %}
+                                {% if perms.main.change_experience %}
+                                    <a href="{% url 'main:update_experience' experience.id %}" class="button">Edit</a>
+                                {% endif %}
+                                {% if perms.main.delete_experience %}
+                                    {% include "components/experience_delete_model.html" with experience=experience %}
                                 {% endif %}
                             </div>
                         </article>
