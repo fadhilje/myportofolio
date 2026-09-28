@@ -59,6 +59,8 @@ def show_experience(request):
 
 @login_required(login_url="/login/")
 def create_experience(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     form = ExperienceForm(request.POST or None)
 
     if request.method == "POST":
@@ -78,6 +80,8 @@ def create_experience(request):
 
 @login_required(login_url="/login/")
 def update_experience(request, experience_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     experience = Experience.objects.filter(pk=experience_id).first()
     if experience is None:
         if request.method == "POST" and not _secret_key_valid(request):
@@ -104,6 +108,9 @@ def update_experience(request, experience_id):
 
 @login_required(login_url="/login/")
 def delete_experience(request, experience_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+    
     if request.method == "POST":
         if not _secret_key_valid(request):
             messages.error(request, "Secret key salah. Experience tidak dihapus.")
@@ -161,6 +168,8 @@ def show_projects(request):
 
 @login_required(login_url="/login/")
 def create_project(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     form = ProjectForm(request.POST or None)
 
     if request.method == "POST":
@@ -180,6 +189,8 @@ def create_project(request):
 
 @login_required(login_url="/login/")
 def update_project(request, project_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     project = Project.objects.filter(pk=project_id).first()
 
     if project is None:
@@ -208,6 +219,8 @@ def update_project(request, project_id):
 
 @login_required(login_url="/login/")
 def delete_project(request, project_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
     if request.method == "POST":
         if not _secret_key_valid(request):
             messages.error(request, "Secret key salah. Proyek tidak dihapus.")
