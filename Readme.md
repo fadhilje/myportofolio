@@ -95,7 +95,39 @@ Prompt yang saya gunakan, "Saya mengalami kendala berupa error seperti pada gamb
 ### Username Pengunjung biasa dan Editor
 | Username | Password | Status |
 | --- | --- | --- |
-| avengers | assemble | pengunjung biasa |
 | kalel | zor_el1229 | editor |
+| avengers | assemble | pengunjung biasa |
 
 ### Deskripsi Setup
+
+**1. Akses editor untuk Experience**
+
+Pada tugas ini saya memilih memberikan akses **edit Experience** kepada editor. Alasannya, menambah dan menghapus Experience adalah keputusan yang mengubah struktur riwayat portofolio, jadi saya biarkan hanya admin (superuser) yang bisa melakukannya. Editor cukup bisa memperbaiki data yang sudah ada, misalnya merevisi deskripsi atau tanggal.
+
+Pembagian aksesnya:
+
+| Aksi | Pengunjung biasa | Editor | Admin |
+| --- | --- | --- | --- |
+| Lihat Experience / Project | ✅ | ✅ | ✅ |
+| Edit Experience | ❌ | ✅ | ✅ |
+| Tambah / Hapus Experience | ❌ | ❌ | ✅ |
+| Tambah / Edit Project | ❌ | ✅ | ✅ |
+| Hapus Project | ❌ | ❌ | ✅ |
+
+Editor dibuat dengan membuat group **Editor** di Django admin (*Authentication and Authorization > Groups*), lalu memberi permission `main | experience | Can change experience`, `main | project | Can add project`, dan `main | project | Can change project`. Setelah itu user `kalel` dimasukkan ke group tersebut lewat halaman edit user. Di sisi view, akses dijaga dengan `@login_required` dan `@permission_required(..., raise_exception=True)`, sedangkan di template tombol hanya muncul jika `perms.main.change_experience` (dan sejenisnya) bernilai true. Setiap perubahan tetap memerlukan secret key.
+
+**2. Fitur filter "Favorit saya" pada Project**
+
+Fitur tambahan yang saya pilih adalah filter **★ Favorit saya** di halaman Project. Saya memilih fitur ini karena setiap project sudah punya tombol star (relasi `starred_by` ke user), sehingga pengguna yang login bisa langsung menyaring project yang pernah mereka star.
+
+Cara kerjanya:
+- Checkbox "Favorit saya" ditambahkan di dalam form pencarian, hanya tampil untuk user yang sudah login, dan otomatis submit saat dicentang (`?starred=1`).
+- `get_projects_json` memfilter dengan `projects.filter(starred_by=request.user)` bila `starred=1` dan user terautentikasi. Filter ini bisa dikombinasikan dengan pencarian judul.
+- Pesan pada kondisi kosong dibedakan: "Belum ada proyek yang kamu star" untuk filter favorit, "Tidak ada proyek dengan nama tersebut" untuk pencarian judul.
+- Pada `toggle_star`, redirect memakai `HTTP_REFERER` yang divalidasi dengan `url_has_allowed_host_and_scheme`, sehingga setelah star/unstar pengguna kembali ke halaman dengan filter yang sama dan tidak terjadi open redirect. Jika referer tidak valid, fallback ke `main:show_projects`.
+
+## Deklarasi AI
+
+Pada Tugas 4, saya menggunakan AI Claude untuk membantu proses menambahkan user yang terdaftar di web saya sebagai editor, yaitu memasukkan user tersebut ke group dan permission Django.
+
+Prompt yang saya gunakan: "saya memiliki tugas untuk menambah kan user yg terdaftar di web saya sebagai editor dengan memasukkan editor tersebut ke group permission, bantu saya untuk melakukan hal tersebut"
