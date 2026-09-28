@@ -12,6 +12,8 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core import serializers
 from django.http import HttpResponse
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 import datetime
 
 
@@ -55,6 +57,7 @@ def show_experience(request):
     }
     return render(request, "experience.html", context)
 
+@login_required(login_url="/login/")
 def create_experience(request):
     form = ExperienceForm(request.POST or None)
 
@@ -73,7 +76,7 @@ def create_experience(request):
     }
     return render(request, "experience_form.html", context)
 
-
+@login_required(login_url="/login/")
 def update_experience(request, experience_id):
     experience = Experience.objects.filter(pk=experience_id).first()
     if experience is None:
@@ -99,7 +102,7 @@ def update_experience(request, experience_id):
     }
     return render(request, "experience_form.html", context)
 
-
+@login_required(login_url="/login/")
 def delete_experience(request, experience_id):
     if request.method == "POST":
         if not _secret_key_valid(request):
@@ -156,7 +159,7 @@ def show_projects(request):
     }
     return render(request, "project.html", context)
 
-
+@login_required(login_url="/login/")
 def create_project(request):
     form = ProjectForm(request.POST or None)
 
@@ -175,7 +178,7 @@ def create_project(request):
     }
     return render(request, "projects_form.html", context)
 
-
+@login_required(login_url="/login/")
 def update_project(request, project_id):
     project = Project.objects.filter(pk=project_id).first()
 
@@ -203,6 +206,7 @@ def update_project(request, project_id):
     }
     return render(request, "projects_form.html", context)
 
+@login_required(login_url="/login/")
 def delete_project(request, project_id):
     if request.method == "POST":
         if not _secret_key_valid(request):
