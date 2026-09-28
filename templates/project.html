@@ -44,7 +44,8 @@
                                     {% if project.project_url %}
                                         <a href="{{ project.project_url }}" class="button">Lihat Project</a>
                                     {% endif %}
-
+                                    {% include "components/project_star.html" with project=project %}
+                                    
                                     {% if user.is_superuser %}
                                     {% include "components/project_delete_model.html" with project=project %}
                                     {% endif %}
