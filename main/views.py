@@ -23,7 +23,6 @@ from django.utils.http import url_has_allowed_host_and_scheme
 # Tutorial 5
 from django.http import JsonResponse
 
-
 def show_main(request):
     last_login = request.COOKIES.get('last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
     context = {
@@ -211,6 +210,19 @@ def create_project(request):
     }
     return render(request, "projects_form.html", context)
 
+@login_required(login_url="/login/")
+@permission_required("main.add_project", raise_exception=True)
+@require_POST
+def create_project_ajax(reqeust):
+    if not reqeust.user.is_superuser:
+        return JsonResponse({"message": "Hanya pemilik portofolio yang dapat menambahkan proyek."}, status=403)
+
+    form = ProjectForm(reqeust.POST)
+    if form.is_valid():
+        project = form.save()
+        return JsonResponse({"message": "Proyek berhasil ditambahkan.", "pk" : str(project.id)}, status=201)
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 # Key tetap di butuhkan oleh editor agar pemilik web tahu ketika editor ingin merubah page projek baik itu create/update/delete
 @login_required(login_url="/login/")
 @permission_required("main.change_project", raise_exception=True)
