@@ -20,6 +20,9 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 
+# Tutorial 5
+from django.http import JsonResponse
+
 
 def show_main(request):
     last_login = request.COOKIES.get('last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
@@ -154,25 +157,37 @@ def get_projects_json(request):
     if only_starred and request.user.is_authenticated:
         projects = projects.filter(starred_by=request.user)
 
-    projects_json = serializers.serialize("json", projects, fields=("title", "description", "tech_stark", "project_url", "project_image_url"))
-    return HttpResponse(projects_json, content_type="application/json")
+    data = []
+    for project in projects:
+        starred_users = project.starred_by.all()
+        is_starred = request.user in starred_users if request.user.is_authenticated else False
+        starred_by_names = ", ".join([u.username for u in starred_users])
+
+        data.append({
+            "pk": str(project.id),
+            "fields": {
+                "title": project.title,
+                "description": project.description,
+                "tech_stack": project.tech_stack,
+                "project_url": project.project_url,
+                "project_image_url": project.project_image_url,
+                "star_count": starred_users.count(),
+                "is_starred": is_starred,
+                "starred_by_names": starred_by_names,
+            }
+        })
+
+    return JsonResponse(data, safe=False)
 
 
 def show_projects(request):
-    json_response = get_projects_json(request)
-
-    projects = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    projects = [project.object for project in projects]
     title_query = request.GET.get("title", "").strip()
 
     context = {
         "name": "Nurfadhil",
-        "project_list": projects,
         "title_query": title_query,
         "only_starred": request.GET.get("starred") == "1" and request.user.is_authenticated,
+        "form": ProjectForm(),
     }
     return render(request, "project.html", context)
 
