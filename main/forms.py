@@ -1,4 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm, TextInput, Textarea, URLInput, DateTimeInput, Select
+from django.utils.html import strip_tags
 
 from main.models import Project, Experience
 
@@ -95,3 +97,16 @@ class ExperienceForm(ModelForm):
                 }
             ),
         }
+
+    # Perlindungan XSS sisi server: buang semua tag HTML dari input teks
+    def clean_title(self):
+        title = strip_tags(self.cleaned_data["title"]).strip()
+        if not title:
+            raise ValidationError("Judul tidak boleh kosong atau hanya berisi tag HTML.")
+        return title
+
+    def clean_description(self):
+        description = strip_tags(self.cleaned_data["description"]).strip()
+        if not description:
+            raise ValidationError("Deskripsi tidak boleh kosong atau hanya berisi tag HTML.")
+        return description
