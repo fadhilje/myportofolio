@@ -131,3 +131,60 @@ Cara kerjanya:
 Pada Tugas 4, saya menggunakan AI Claude untuk membantu proses menambahkan user yang terdaftar di web saya sebagai editor, yaitu memasukkan user tersebut ke group dan permission Django.
 
 Prompt yang saya gunakan: "saya memiliki tugas untuk menambah kan user yg terdaftar di web saya sebagai editor dengan memasukkan editor tersebut ke group permission, bantu saya untuk melakukan hal tersebut"
+
+
+## Tugas 5
+
+### 1. **Apa itu *debouncing* dan kenapa penting di pencarian AJAX**
+*Debouncing* adalah teknik menunda eksekusi sebuah fungsi sampai pemicunya berhenti selama waktu tertentu. Setiap kali event baru muncul, timer yang lama dibatalkan dan dimulai lagi dari awal, jadi fungsinya cuma jalan sekali setelah jeda. Di project ini, event `input` pada kolom cari memakai `clearTimeout` lalu `setTimeout` dengan jeda 300 ms, jadi `fetch()` baru dikirim setelah pengguna berhenti mengetik.
+
+Tanpa debouncing, setiap karakter yang diketik langsung jadi satu request. Mengetik "backend" saja sudah menghasilkan 7 request, padahal cuma hasil terakhir yang dibutuhkan. Dampaknya:
+   - Beban server dan database naik tanpa perlu, karena tiap request menjalankan query `icontains`.
+   - Bandwidth terbuang dan UI bisa berkedip karena daftar dirender ulang berkali-kali.
+   - Ada risiko *race condition*. Response request lama bisa saja tiba setelah response request baru, sehingga hasil pencarian yang sudah usang menimpa hasil yang benar.
+   
+Selain debouncing, aku juga memakai `AbortController` untuk membatalkan request sebelumnya yang belum selesai, jadi hasil yang tampil selalu berasal dari pencarian paling baru.
+
+### 2. **Fungsi `await` pada `fetch()` dan apa yang terjadi kalau tidak dipakai**
+`fetch()` itu asinkron dan tidak langsung mengembalikan data, tapi sebuah `Promise` yang menjanjikan `Response` di masa depan. Kata kunci `await` (di dalam fungsi `async`) menjeda jalannya fungsi itu sampai Promise-nya selesai, lalu mengembalikan nilai `Response`-nya. Halaman tetap tidak membeku karena yang berhenti sementara hanya fungsi tersebut, bukan seluruh browser. Hal yang sama berlaku untuk `response.json()` yang juga mengembalikan Promise.
+
+Kalau `await` tidak dipakai, variabel `response` isinya masih Promise yang berstatus *pending*, bukan `Response`. Akibatnya:
+   - `response.ok` bernilai `undefined` dan `response.json()` memicu `TypeError`, karena Promise tidak punya method itu.
+   - Baris di bawahnya langsung jalan sebelum data dari server datang, jadi daftar bisa kosong atau tidak pernah dirender.
+   - Error jaringan tidak tertangkap oleh `try/catch`, karena penolakan Promise terjadi setelah blok `try` selesai. Pesan error di UI pun tidak muncul.
+
+Alternatifnya adalah rantai `.then()`, tapi `async/await` lebih mudah dibaca dan penanganan errornya bisa dengan `try/catch` biasa.
+
+### 3. **Apa itu serangan XSS dan kenapa data via AJAX/JavaScript lebih rentan dibanding template Django**
+*Cross-Site Scripting* (XSS) adalah serangan di mana penyerang menyisipkan kode berbahaya (biasanya JavaScript) ke dalam data yang nanti ditampilkan di halaman, sehingga kode itu dijalankan di browser pengunjung lain dengan hak akses origin website kita. Contoh *stored XSS*: penyerang mengisi judul dengan `<img src=x onerror="...">`. Kalau data itu dirender mentah, setiap orang yang membuka halaman akan menjalankan skrip tersebut. Dampaknya bisa berupa pengiriman request atas nama korban yang sedang login, pembacaan token atau data di halaman, pengubahan tampilan, sampai pengalihan ke situs palsu.
+
+Template Django aman secara bawaan karena `{{ variable }}` otomatis di-*escape*, jadi `<` menjadi `&lt;` dan ditampilkan sebagai teks biasa. Pada AJAX, alurnya beda. Server mengirim JSON yang berisi teks apa adanya, lalu JavaScript yang membangun HTML sendiri, misalnya lewat template literal yang dimasukkan ke `innerHTML`. Di sini tidak ada *auto-escape*, jadi kalau nilai dari JSON langsung disisipkan, string `<img onerror=...>` akan diperlakukan browser sebagai HTML sungguhan dan dieksekusi. Escape juga harus ditulis manual untuk setiap field, jadi satu field yang terlewat saja sudah cukup jadi celah.
+
+Karena itu di project ini aku memakai pertahanan berlapis:
+   - **Sisi client:** semua nilai teks yang disisipkan ke HTML lewat JavaScript di-*escape* dengan fungsi `escapeHtml()`, atau memakai `textContent` untuk teks biasa.
+   - **Sisi server:** input dibersihkan dengan `strip_tags` di method `clean_title` dan `clean_description` pada `ExperienceForm`, jadi tag HTML tidak ikut tersimpan ke database
+
+## Penjelasan Setup Tugas 5
+
+**1. Implementasi Asinkronus Data Experience & Pencarian (Fetch API & Debouncing)**
+Pada tugas ini, halaman daftar Experience diubah menjadi berbasis AJAX/asinkronus untuk meningkatkan user experience agar pengolahan data berjalan tanpa me-reload seluruh halaman.
+    **Cara kerjanya:**
+    - Render Kerangka: View show_experience hanya bertugas merender kerangka HTML utama *(experience.html)*.
+    - Fetch Data JSON: JavaScript memanggil endpoint API `get_experience_json` menggunakan `fetch()`. Endpoint ini mengambil data dari database, memfilter berdasarkan parameter query title jika ada pencarian, lalu menyusun serta mengembalikan respons array JSON secara manual menggunakan JsonResponse.
+    - Manajemen State: Pada *experience.html*, status tampilan (loading, error, empty, dan grid) dikontrol secara dinamis dengan menyembunyikan atau menampilkan elemen DOM terkait menggunakan kelas CSS. Digunakan pula AbortController untuk membatalkan request Fetch sebelumnya jika ada permintaan baru yang dikirim berurutan.   
+    - Pencarian dengan Debouncing: Input pencarian dilengkapi event listener input yang menerapkan *fungsi debouncing (300 ms)* menggunakan `setTimeout` dan `clearTimeout`. Hal ini memastikan request AJAX baru dikirim setelah pengguna berhenti mengetik, sehingga menghemat beban lalu lintas jaringan ke server.
+
+**2. Penambahan Data Asinkronus via Modal Form & Kontrol Akses Backend**
+Fitur penambahan Experience dibuat berbasis modal dan AJAX agar pengguna (admin) tidak perlu berpindah ke halaman terpisah saat menambahkan data baru.
+    **Cara kerjanya:**
+    - Modal Native: Form penambahan diletakkan dalam modal *(experience_form_modal.html)* memanfaatkan HTML Popover API `(popover="auto")`.
+    - Pengiriman AJAX & CSRF: Event pengiriman form ditangani oleh JavaScript `(addExperience)`. Pengiriman data dilakukan menggunakan `FormData` via metode `POST` dengan menyertakan token CSRF pada header X-CSRFToken yang diambil dari cookie `csrftoken`.
+    - Pemeriksaan Hak Akses di View: Di sisi backend, view create_experience_ajax memeriksa autentikasi dan peran pengguna secara ketat `(is_superuser dan has_perm("main.add_experience"))`. View ini tidak mengembalikan HTML/redirect, melainkan respon JSON dengan kode status HTTP yang sesuai: 201 untuk sukses, 400 untuk kesalahan validasi form, dan 403 jika pengguna tidak memiliki hak akses.
+    - Pembaruan Otomatis: Setelah data berhasil disimpan di server, modal ditutup, isi form di-reset, dan daftar Experience langsung diperbarui secara otomatis melalui pemanggilan ulang fungsi `fetchExperiences()` tanpa reload halaman.\
+
+**3. Sistem Notifikasi Toast & Perlindungan Keamanan (XSS & CSRF)**
+Untuk memberikan feedback langsung kepada pengguna serta menjaga keamanan aplikasi dari serangan Cross-Site Scripting (XSS), diterapkan sistem notifikasi toast dan sanitasi data ganda.
+    **Cara kerjanya:**
+    - Komponen Toast: Dibuat komponen terpisah *(toast.html & toast.js)* yang memanfaatkan Popover API `(popover="manual")`. Fungsi `showToast(title, message, type, duration)` mengatur warna/tipe toast `(toast-success, toast-error, toast-normal)`, animasi kemunculan, serta timer otomatis untuk menyembunyikannya kembali. Jika validasi backend gagal, pesan kesalahan dari result.errors di-extract dan ditampilkan ke dalam toast error.
+    - Sanitasi Sisi Client (Front-end XSS Protection): Semua nilai teks dinamis dari server disaring menggunakan fungsi `escapeHtml()` sebelum disisipkan ke dalam struktur HTML. Selain itu, pengisian teks judul dan pesan pada toast menggunakan properti .`textConten`t` untuk memastikan input dirender sebagai string murni, bukan elemen HTML yang dapat dieksekusi.
+    - Sanitasi Sisi Server (Back-end XSS Protection): Pada *forms.py*, kelas `ExperienceForm` mengimplementasikan method `clean_title()` dan `clean_description()` yang memanfaatkan fungsi `strip_tags()` dari Django. Ini memastikan semua tag HTML dibuang dari string sebelum diselesaikan oleh proses validasi dan disimpan ke database.
