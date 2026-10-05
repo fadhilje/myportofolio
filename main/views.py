@@ -44,22 +44,36 @@ def _secret_key_valid(request):
 
 
 def get_experience_json(request):
-    experiences = Experience.objects.all()
-    experience_json = serializers.serialize("json", experiences)
-    return HttpResponse(experience_json, content_type="application/json")
+    # Endpoint JSON (manual pakai JsonResponse) + pencarian berdasarkan title.
+    title_query = request.GET.get("title", "").strip()
+    experiences = Experience.objects.all().order_by("-started_at")
+ 
+    if title_query:
+        experiences = experiences.filter(title__icontains=title_query)
+ 
+    data = []
+    for experience in experiences:
+        data.append({
+            "pk": str(experience.id),
+            "fields": {
+                "title": experience.title,
+                "description": experience.description,
+                "category": experience.category,
+                "category_display": experience.get_category_display(),
+                "thumbnail": experience.thumbnail or "",
+                "started_at": experience.started_at.isoformat(),
+                "ended_at": experience.ended_at.isoformat() if experience.ended_at else None,
+                "is_ongoing": experience.is_ongoing,
+            },
+        })
+ 
+    return JsonResponse(data, safe=False)
 
 def show_experience(request):
-    json_response = get_experience_json(request)
-
-    experiences = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    experiences = [experience.object for experience in experiences]
-
+    # Hanya merender kerangka halaman; data dimuat lewat fetch() ke get_experience_json.
     context = {
         "name": "Nurfadhil",
-        "experience_list": experiences,
+        "form": ExperienceForm(),
     }
     return render(request, "experience.html", context)
 
@@ -84,6 +98,31 @@ def create_experience(request):
         "is_edit": False,
     }
     return render(request, "experience_form.html", context)
+
+@require_POST
+def create_experience_ajax(request):
+    # Hak akses dicek di dalam view dan membalas JSON (bukan redirect/HTML),
+    # supaya fetch() di sisi client bisa menampilkan pesan lewat toast.
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"message": "Silakan login terlebih dahulu."}, status=403
+        )
+ 
+    if not (request.user.is_superuser and request.user.has_perm("main.add_experience")):
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan experience."},
+            status=403,
+        )
+ 
+    form = ExperienceForm(request.POST)
+    if form.is_valid():
+        experience = form.save()
+        return JsonResponse(
+            {"message": "Experience berhasil ditambahkan.", "pk": str(experience.id)},
+            status=201,
+        )
+ 
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 @login_required(login_url="/login/")
 @permission_required("main.change_experience", raise_exception=True)
