@@ -37,7 +37,6 @@ OWNER_SECRET_KEY = os.getenv('OWNER_SECRET_KEY', 'Jangan-di-obrak-abrik')
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -46,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
