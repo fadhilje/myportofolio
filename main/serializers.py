@@ -15,7 +15,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "project_url", "project_image_url", "star_count",
             "is_starred", "starred_by_names",
         ]
-        read_only_field = ["id"]
+        read_only_fields = ["id"]
 
     def validate_title(self, value):
         value = strip_tags(value).strip()
@@ -26,7 +26,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     def validate_description(self, value):
         return strip_tags(value)
 
-    def validate_tech_stark(self, value):
+    def validate_tech_stack(self, value):
         return strip_tags(value)
 
     def get_star_count(self, obj):
@@ -36,7 +36,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request is None or not request.user.is_authenticated:
             return False
-        return request.user or obj.starred_by.all()
+        return request.user in obj.starred_by.all()
 
     def get_starred_by_names(self, obj):
         return ",".join(user.username for user in obj.starred_by.all())
