@@ -7,24 +7,42 @@
     <main>
         <section class="skill-section" id="skills">
             <div class="container">
-                <p class="section-kicker">Skills</p>
-                <h1>Technical Skills</h1>
+                <div class="section-badge-header">
+                    <p class="section-kicker">
+                        <span class="kicker-icon" aria-hidden="true">🛠️</span>
+                        <span>Toolkit &amp; Keahlian</span>
+                    </p>
+                    <div class="page-title-group">
+                        <h1>Technical Skills</h1>
+                        <span class="page-title-doodle" aria-hidden="true">✦ ✧ ✦</span>
+                    </div>
+                    <p class="section-intro">Kompilasi keahlian teknis dan interpersonal yang terus saya asah dan kembangkan.</p>
+                </div>
 
                 <div class="skills-grid">
                     {% for category, items in grouped_skills.items %}
                     <div class="skill-category">
-                        <h3>{{ category }}</h3>
+                        <div class="card-tape-accent" aria-hidden="true"></div>
+                        <div class="skill-category-head">
+                            <span class="skill-header-icon" aria-hidden="true">
+                                {% if category == "Soft Skills" %}🤝{% elif "Language" in category %}💻{% else %}⚙️{% endif %}
+                            </span>
+                            <h3>{{ category }}</h3>
+                        </div>
 
                         {% if category == "Soft Skills" %}
                         <div class="pill-group">
                             {% for skill in items %}
-                            <span class="pill">{{ skill.name }}</span>
+                            <span class="pill pill-sticker-{% cycle '1' '2' '3' %}">
+                                <span class="pill-dot" aria-hidden="true">✦</span>
+                                {{ skill.name }}
+                            </span>
                             {% endfor %}
                         </div>
                         {% else %}
                         <div class="icon-row">
                             {% for skill in items %}
-                            <span class="icon-tile" title="{{ skill.name }}">
+                            <span class="icon-tile" title="{{ skill.name }}" tabindex="0">
                                 {{ skill.name|skill_icon }}
                                 <span class="sr-only">{{ skill.name }}</span>
                             </span>

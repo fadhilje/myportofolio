@@ -1,33 +1,43 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block meta %}
-        <title>{{username}} - {% if is_edit %}Edit Project{% else %}Add Project{% endif %}</title>
+    <title>{{username}} - {% if is_edit %}Edit Project{% else %}Add Project{% endif %}</title>
 {% endblock meta %}
 {% block content %}
     <main>
         <section class="experience-section">
-            <div class="container">
-                <p class="section-kicker">{% if is_edit %}Perbarui Projekmu!{% else %}Tambah Projek Barumu!{% endif %}</p>
-                <h1>{% if is_edit %}Edit Project{% else %}Add New Projects{% endif %}</h1>
-                <form method="post"
-                      action="{% if is_edit %}{% url 'main:update_project' form.instance.pk %}{% else %}{% url 'main:create_project' %}{% endif %}"
-                      class="project-form">
-                    {% csrf_token %}
-                    {% for field in form %}
-                        <div class="form-group">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
-                            {% for error in field.errors %}
-                                <p class="form-error">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endfor %}
-                    <div class="form-group">
-                        <label for="secret_key">Secret Key</label>
-                        <input type="password" id="secret_key" name="secret_key" placeholder="Masukkan secret key" required>
+            <div class="container form-page-container">
+                <div class="form-page-card">
+                    <div class="card-tape-accent" aria-hidden="true"></div>
+                    <div class="section-badge-header">
+                        <p class="section-kicker">
+                            <span class="kicker-icon" aria-hidden="true">🎨</span>
+                            <span>{% if is_edit %}Perbarui Projekmu!{% else %}Tambah Projek Barumu!{% endif %}</span>
+                        </p>
+                        <h1>{% if is_edit %}Edit Project{% else %}Add New Projects{% endif %}</h1>
                     </div>
-                    <button type="submit" class="button">{% if is_edit %}Simpan Perubahan{% else %}Tambah Project{% endif %}</button>
-                    <a href="{% url 'main:show_projects' %}" class="button button-secondary">Batal</a>
-                </form>
+                    <form method="post"
+                          action="{% if is_edit %}{% url 'main:update_project' form.instance.pk %}{% else %}{% url 'main:create_project' %}{% endif %}"
+                          class="project-form">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <p class="form-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <div class="form-group">
+                            <label for="secret_key">Secret Key</label>
+                            <input type="password" id="secret_key" name="secret_key" placeholder="Masukkan secret key..." required class="secret-key-input">
+                        </div>
+                        <div class="form-actions-row">
+                            <button type="submit" class="button">{% if is_edit %}💾 Simpan Perubahan{% else %}✨ Tambah Project{% endif %}</button>
+                            <a href="{% url 'main:show_projects' %}" class="button button-secondary">Batal</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </section>
     </main>

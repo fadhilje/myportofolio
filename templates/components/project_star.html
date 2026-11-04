@@ -3,14 +3,16 @@
         {% csrf_token %}
         <button type="submit"
                 class="button button-star{% if user in project.starred_by.all %} is-starred{% endif %}">
-            <span aria-hidden="true">★</span>
-            {% if user in project.starred_by.all %}Unstar{% else %}Star{% endif %}
+            <span class="star-symbol" aria-hidden="true">★</span>
+            <span class="star-text">{% if user in project.starred_by.all %}Unstar{% else %}Star{% endif %}</span>
             <span class="star-count">{{ project.starred_by.count }}</span>
         </button>
     </form>
 {% else %}
     <a href="{% url 'main:login' %}" class="button button-star" title="Login untuk memberi star">
-        <span aria-hidden="true">★</span> Star
+        <span class="star-symbol" aria-hidden="true">★</span>
+        <span class="star-text">Star</span>
         <span class="star-count">{{ project.starred_by.count }}</span>
     </a>
 {% endif %}
+

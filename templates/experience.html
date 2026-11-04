@@ -6,42 +6,76 @@
     <main>
         <section class="experience-section" id="experience">
             <div class="container">
-                <p class="section-kicker">Perjalanan saya sejauh ini</p>
-                <div class="project-header">
-                    <h1>Experience</h1>
-                    {% if user.is_superuser and perms.main.add_experience %}
-                        <button type="button"
-                                class="button project-add-button"
-                                popovertarget="add-experience-modal">
-                            <span aria-hidden="true">+</span>
-                            Tambah Experience
-                        </button>
-                    {% endif %}
+                <div class="section-badge-header">
+                    <p class="section-kicker">
+                        <span class="kicker-icon" aria-hidden="true">💼</span>
+                        <span>Perjalanan saya sejauh ini</span>
+                    </p>
+                    <div class="project-header">
+                        <div class="page-title-group">
+                            <h1>Experience</h1>
+                            <span class="page-title-doodle" aria-hidden="true">✦ ✧ ✦</span>
+                        </div>
+                        {% if user.is_superuser and perms.main.add_experience %}
+                            <button type="button"
+                                    class="button project-add-button"
+                                    popovertarget="add-experience-modal">
+                                <span class="add-plus-icon" aria-hidden="true">+</span>
+                                <span>Tambah Experience</span>
+                            </button>
+                        {% endif %}
+                    </div>
                 </div>
 
-                <form id="experience-search-form" class="project-search">
-                    <input type="search"
-                           id="experience-search-input"
-                           name="title"
-                           placeholder="Cari berdasarkan judul experience"
-                           class="project-search__input"
-                           aria-label="Cari berdasarkan judul experience">
-                    <button type="submit" class="button">Cari</button>
+                <form id="experience-search-form" class="project-search" role="search">
+                    <div class="search-input-wrap">
+                        <span class="search-icon" aria-hidden="true">🔍</span>
+                        <input type="search"
+                               id="experience-search-input"
+                               name="title"
+                               placeholder="Cari berdasarkan judul experience..."
+                               class="project-search__input"
+                               aria-label="Cari berdasarkan judul experience">
+                    </div>
+                    <button type="submit" class="button button-search">
+                        <span>Cari</span>
+                    </button>
                 </form>
 
-                <!-- Loading State -->
+                <!-- Loading State: Illustrative Animation -->
                 <div id="experience-loading" class="empty-state hide">
-                    <p>Memuat experience...</p>
+                    <div class="empty-doodle-icon" aria-hidden="true">
+                        <svg class="loading-spinner-doodle" viewBox="0 0 50 50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <p class="empty-title">Membuka catatan riwayat...</p>
+                    <p class="empty-desc">Memuat experience...</p>
                 </div>
 
                 <!-- Error State -->
                 <div id="experience-error" class="empty-state hide">
-                    <p>Gagal memuat data experience. Silakan coba lagi.</p>
+                    <div class="empty-doodle-icon" aria-hidden="true">
+                        <span class="doodle-emoji">⛈️</span>
+                    </div>
+                    <p class="empty-title">Ada kendala memuat data!</p>
+                    <p class="empty-desc">Gagal memuat data experience. Silakan coba lagi.</p>
                 </div>
 
                 <!-- Empty State -->
                 <div id="experience-empty" class="empty-state hide">
-                    <p>Belum ada pengalaman yang ditambahkan atau ditemukan.</p>
+                    <div class="empty-doodle-icon" aria-hidden="true">
+                        <svg viewBox="0 0 80 80" class="empty-svg-illustration" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="15" y="25" width="50" height="42" rx="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2.5"/>
+                            <path d="M10 32C10 30 12 28 15 28L65 28C68 28 70 30 70 32L68 37C68 39 66 40 63 40L17 40C14 40 12 39 12 37L10 32Z" fill="var(--amber)" stroke="var(--ink)" stroke-width="2"/>
+                            <path d="M30 46H50M35 53H45" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>
+                            <circle cx="62" cy="20" r="3" fill="var(--accent)"/>
+                            <path d="M60 12L61 15L64 16L61 17L60 20L59 17L56 16L59 15L60 12Z" fill="var(--amber)"/>
+                            <path d="M22 17L22.5 19L24.5 19.5L22.5 20L22 22L21.5 20L19.5 19.5L21.5 19L22 17Z" fill="var(--plum)"/>
+                        </svg>
+                    </div>
+                    <p class="empty-title">Belum ada pengalaman yang ditambahkan atau ditemukan.</p>
+                    <p class="empty-desc">Coba cari dengan kata kunci lain atau tambahkan pengalaman baru melalui tombol di atas.</p>
                 </div>
 
                 <!-- Experience Grid -->
@@ -55,7 +89,7 @@
     {% endif %}
 
     {% if user.is_superuser and perms.main.delete_experience %}
-        <!-- Satu modal hapus yang dipakai bersama oleh semua card -->
+        <!-- Modal hapus yang dipakai bersama oleh semua card -->
         <div id="delete-experience-modal"
              class="project-delete-modal"
              popover="auto"
@@ -68,15 +102,17 @@
                     popovertargetaction="hide"
                     aria-label="Tutup konfirmasi hapus"></button>
             <div class="project-delete-modal__content">
+                <div class="modal-tape-accent" aria-hidden="true"></div>
                 <button type="button"
                         class="project-delete-modal__close"
                         popovertarget="delete-experience-modal"
                         popovertargetaction="hide"
                         aria-label="Tutup konfirmasi hapus">×</button>
+                <div class="modal-icon-badge" aria-hidden="true">🗑️</div>
                 <h2 id="delete-experience-modal-title">Hapus Experience?</h2>
-                <p>
+                <p class="delete-modal-text">
                     Apakah Anda yakin ingin menghapus
-                    <strong id="delete-experience-name"></strong>?
+                    <strong id="delete-experience-name"></strong>? Tindakan ini tidak dapat dibatalkan.
                 </p>
                 <div class="project-delete-modal__actions">
                     <button type="button"
@@ -85,8 +121,8 @@
                             popovertargetaction="hide">Batal</button>
                     <form id="delete-experience-form" method="post" action="">
                         {% csrf_token %}
-                        <input type="password" name="secret_key" placeholder="Secret key" required
-                               style="margin-bottom: 0.5rem; width: 100%;">
+                        <input type="password" name="secret_key" placeholder="Masukkan secret key..." required
+                               class="secret-key-input">
                         <button type="submit" class="button button-danger">Ya, Hapus</button>
                     </form>
                 </div>
@@ -101,7 +137,6 @@
     const DUMMY_UUID = "00000000-0000-0000-0000-000000000000";
     const UPDATE_URL_TEMPLATE = "{% url 'main:update_experience' '00000000-0000-0000-0000-000000000000' %}";
     const DELETE_URL_TEMPLATE = "{% url 'main:delete_experience' '00000000-0000-0000-0000-000000000000' %}";
-    // Ini hanya untuk menyembunyikan tombol; pengecekan hak akses yang sebenarnya ada di view.
     const CAN_CHANGE = "{{ perms.main.change_experience|yesno:'true,false' }}" === "true";
     const CAN_DELETE = "{{ user.is_superuser|yesno:'true,false' }}" === "true" && "{{ perms.main.delete_experience|yesno:'true,false'}}" === "true";
     const SEARCH_DEBOUNCE_DELAY = 300;
@@ -155,28 +190,36 @@
         article.className = 'experience-card';
 
         const imageHtml = experience.thumbnail
-            ? `<img src="${escapeHtml(experience.thumbnail)}" alt="Thumbnail ${escapeHtml(experience.title)}" class="project-image">`
+            ? `<div class="card-image-wrap"><img src="${escapeHtml(experience.thumbnail)}" alt="Thumbnail ${escapeHtml(experience.title)}" class="project-image"></div>`
             : '';
 
-        const statusText = experience.is_ongoing ? 'Sedang berlangsung' : 'Selesai';
+        const isOngoing = Boolean(experience.is_ongoing);
+        const statusText = isOngoing ? 'Sedang berlangsung' : 'Selesai';
+        const statusBadgeClass = isOngoing ? 'status-ongoing' : 'status-completed';
 
         const updateUrl = UPDATE_URL_TEMPLATE.replace(DUMMY_UUID, experienceId);
         const editHtml = CAN_CHANGE
-            ? `<a href="${escapeHtml(updateUrl)}" class="button">Edit</a>`
+            ? `<a href="${escapeHtml(updateUrl)}" class="button button-edit">✏️ Edit</a>`
             : '';
         const deleteHtml = CAN_DELETE
-            ? `<button type="button" class="button button-danger js-delete-experience">Hapus Experience</button>`
+            ? `<button type="button" class="button button-danger js-delete-experience">🗑️ Hapus Experience</button>`
             : '';
 
         article.innerHTML = `
+            <div class="card-tape-accent" aria-hidden="true"></div>
             ${imageHtml}
-            <span class="experience-category">${escapeHtml(experience.category_display)}</span>
-            <h2>${escapeHtml(experience.title)}</h2>
-            <p class="experience-description">${escapeHtml(experience.description)}</p>
-            <p class="experience-status">${escapeHtml(statusText)}</p>
-            <div class="project-actions">
-                ${editHtml}
-                ${deleteHtml}
+            <div class="card-inner-content">
+                <span class="experience-category">${escapeHtml(experience.category_display || experience.category || 'General')}</span>
+                <h2>${escapeHtml(experience.title)}</h2>
+                <p class="experience-description">${escapeHtml(experience.description)}</p>
+                <div class="experience-status-badge ${statusBadgeClass}">
+                    <span class="status-pulse-dot" aria-hidden="true"></span>
+                    <span class="experience-status">${escapeHtml(statusText)}</span>
+                </div>
+                <div class="project-actions">
+                    ${editHtml}
+                    ${deleteHtml}
+                </div>
             </div>
         `;
 
