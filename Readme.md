@@ -188,3 +188,42 @@ Untuk memberikan feedback langsung kepada pengguna serta menjaga keamanan aplika
     - Komponen Toast: Dibuat komponen terpisah *(toast.html & toast.js)* yang memanfaatkan Popover API `(popover="manual")`. Fungsi `showToast(title, message, type, duration)` mengatur warna/tipe toast `(toast-success, toast-error, toast-normal)`, animasi kemunculan, serta timer otomatis untuk menyembunyikannya kembali. Jika validasi backend gagal, pesan kesalahan dari result.errors di-extract dan ditampilkan ke dalam toast error.
     - Sanitasi Sisi Client (Front-end XSS Protection): Semua nilai teks dinamis dari server disaring menggunakan fungsi `escapeHtml()` sebelum disisipkan ke dalam struktur HTML. Selain itu, pengisian teks judul dan pesan pada toast menggunakan properti .`textConten`t` untuk memastikan input dirender sebagai string murni, bukan elemen HTML yang dapat dieksekusi.
     - Sanitasi Sisi Server (Back-end XSS Protection): Pada *forms.py*, kelas `ExperienceForm` mengimplementasikan method `clean_title()` dan `clean_description()` yang memanfaatkan fungsi `strip_tags()` dari Django. Ini memastikan semua tag HTML dibuang dari string sebelum diselesaikan oleh proses validasi dan disimpan ke database.
+
+
+## Tugas 6
+
+### 1. **REST, RESTful, serta perbedaan `PUT` dan `PATCH`**
+
+   REST (*Representational State Transfer*) adalah gaya arsitektur untuk membuat API berbasis HTTP. Intinya, setiap data dianggap sebagai *resource* yang punya URL sendiri, dan aksi terhadap resource itu dinyatakan lewat method HTTP (`GET` untuk membaca, `POST` untuk membuat, `PUT`/`PATCH` untuk mengubah, `DELETE` untuk menghapus). Server juga *stateless*, artinya setiap request membawa semua informasi yang dibutuhkan, dan hasilnya dilaporkan lewat status code HTTP yang tepat.
+
+   Mengembalikan JSON saja belum cukup untuk disebut RESTful karena JSON hanya format data. Pada Tutorial 05, `get_experience_json` memang mengembalikan JSON, tetapi aksinya masih ada di nama URL (misalnya `create_experience_ajax`), dan statusnya belum konsisten. Pada API di tugas ini, URL-nya berupa resource (`/api/v1/experience/` dan `/api/v1/experience/<id>/`), aksinya ditentukan oleh method, dan status code-nya sesuai: `201` saat data dibuat, `204` setelah dihapus, `400` untuk input tidak valid, `403` untuk tindakan yang tidak diizinkan, dan `404` untuk data yang tidak ditemukan.
+
+   `PUT` mengganti seluruh resource, sehingga semua field wajib dikirim. Kalau ada field wajib yang hilang, hasilnya `400`. `PATCH` hanya mengubah field yang dikirim. Contoh `PUT`: form edit yang selalu mengirim semua isi experience sekaligus. Contoh `PATCH`: Editor hanya memperbaiki typo pada judul, atau pemilik hanya mengisi `ended_at` saat sebuah experience selesai, tanpa perlu mengirim ulang field lainnya.
+
+### 2. **Peran serializer dibandingkan `JsonResponse` manual**
+
+   Serializer bertugas menerjemahkan dua arah: objek model menjadi data yang siap dijadikan JSON (*serialization*), dan JSON dari request menjadi data yang sudah divalidasi lalu bisa disimpan (*deserialization*). Pada Tutorial 05, saya menyusun `dict` satu per satu di view, lalu mengubah tipe data seperti UUID dan tanggal secara manual (`str(id)`, `isoformat()`).
+
+   Keuntungan serializer:
+   - **Validasi di satu tempat.** `ExperienceSerializer` mengecek pilihan `category`, format URL thumbnail, dan membersihkan teks dengan `strip_tags` lewat `validate_title` dan `validate_description`. Kalau gagal, DRF otomatis membalas `400` dengan pesan error per field.
+   - **Field ditulis eksplisit.** Daftar `fields` menentukan data apa saja yang keluar, jadi data akun sensitif seperti email atau *password hash* tidak ikut tampil.
+   - **Field hasil perhitungan.** `star_count` dan `is_starred` dibuat dengan `SerializerMethodField` dan bersifat *read-only*, sehingga tidak bisa diisi dari request.
+   - **Dipakai ulang.** Definisi yang sama dipakai untuk daftar, detail, dan endpoint star, sedangkan `save()` menangani pembuatan dan pembaruan data. Dengan `dict` manual, setiap penambahan field harus diubah di banyak tempat.
+
+### 3. **Autentikasi dan otorisasi, serta alasan memakai permission class**
+
+   Autentikasi menjawab "siapa kamu?". Di API ini, `SessionAuthentication` membaca cookie sesi lalu mengisi `request.user`. Otorisasi menjawab "apa yang boleh kamu lakukan?". Itu dilakukan oleh *permission class*, misalnya `IsPortfolioOwnerOrEditorOrReadOnly`: pengunjung hanya boleh membaca, pengguna biasa boleh memberi star, Editor boleh `PUT`/`PATCH`, dan pemilik portfolio (superuser) boleh membuat, mengubah, serta menghapus.
+
+   Hak akses harus diperiksa di server karena menyembunyikan tombol hanya mengatur tampilan. Siapa pun bisa mengirim request langsung lewat `fetch()` di console browser, `curl`, atau Browsable API tanpa melewati halaman kita, bahkan mengubah nilai variabel JavaScript seperti `CAN_DELETE`. Server adalah satu-satunya tempat yang bisa dipercaya. Pada test, Editor yang mencoba `DELETE` tetap mendapat `403` dan datanya tidak hilang dari database, walaupun tombolnya tidak pernah ditampilkan di halaman.
+
+### 4. **CSRF pada `SessionAuthentication` dan keterbatasan `force_authenticate`**
+
+   Dengan `SessionAuthentication`, browser otomatis menyertakan cookie sesi pada setiap request ke situs kita, termasuk request yang dipicu oleh halaman lain. Kalau pemilik portfolio sedang login lalu membuka situs jahat, situs itu bisa mengirim `DELETE` atau `POST` ke API kita dan server mengira itu permintaan sah dari pemilik. Itulah serangan CSRF.
+
+   Token CSRF mencegahnya. Token itu rahasia dan tidak dikirim otomatis seperti cookie, jadi halaman kita harus mengirimkannya sendiri lewat header `X-CSRFToken`. Situs lain tidak bisa membaca token tersebut karena dibatasi *same-origin policy*, sehingga request tanpa token ditolak dengan `403`. Karena itu `experience.html` menyertakan `X-CSRFToken` pada setiap request yang mengubah data.
+
+   Test yang memakai `force_authenticate` tidak cukup karena method itu langsung mengisi `request.user` tanpa melewati `SessionAuthentication`, dan klien test juga tidak memeriksa CSRF secara default. Hasilnya, request lolos dengan atau tanpa token, jadi test tetap lulus walaupun perlindungan CSRF sebenarnya mati. Untuk membuktikannya, saya memakai `APIClient(enforce_csrf_checks=True)` dengan `.login()`, mengirim request tanpa token, lalu memastikan hasilnya `403` dan isi database tidak berubah (`test_request_without_csrf_token_is_rejected`).
+
+## Deklarasi AI
+Saya menggunakan AI Claude untuk membantu saya memberikan hint dan memastikan pemahaman saya terkait apa yg harus saya lakukan di tugas ini, tetap implementasi kode dan pengambilan keputusan berada di tangan saya, namun karena saya sedang mempersiapkan diri dengan UTS susulan, dan menyelesaikan beberapa tugas dari mata kuliah lain. Saya meminta Claude untuk membuatkan saya unit test seperti perintah dari tugas ini. berikut adalah link chat saya dengan claude saya:
+`https://claude.ai/share/47c22ae5-77df-49cb-bcef-5bd2d3baf75e` 
